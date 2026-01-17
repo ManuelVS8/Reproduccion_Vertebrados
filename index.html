@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>¿Cómo nacen los vertebrados?</title>
+<!-- Favicon solicitado -->
+<link rel="icon" href="https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/icono.ico" type="image/x-icon">
+<style>
+  /* ====== Reset & base ====== */
+  * { box-sizing: border-box; margin:0; padding:0; }
+  :root{
+    --blue:#001DFF;
+    --blue-dark:#04032B; /* Color Oscuro para Títulos */
+    --blue-700:#1a3a5f;
+    --blue-600:#254fba;
+    --orange:#f59e42; /* Botón Volver al menú / Acento */
+    --orange-700:#e67e22;
+    --bg-grad-1:#1a3a5f;
+    --bg-grad-2:#0d2340;
+    --white:#ffffff;
+    --green:#2ecc71; /* Correcto */
+    --green-dark:#27ae60;
+    --red:#e74c3c; /* Incorrecto */
+    --red-dark:#c0392b;
+    --panel:#E8EAFF;
+  }
+  body{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; /* Ajustado al borde superior */
+    color:#333; padding:10px; padding-top: 2rem; /* Margen estético superior para ver el fondo */
+  }
+  .game-container{
+    background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
+    padding:1.2rem; max-width:800px; width:100%; min-height:640px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  header{ text-align:center; margin-bottom:0.5rem; margin-top:1rem; }
+  h1{ color:var(--blue-dark); font-size:clamp(1.6rem,4.5vw,2.5rem); font-weight:900; letter-spacing:.5px; display:none; }
+  
+  /* Título visible solo en pantallas de inicio y final */
+  .screen:not(#gameScreen) h1 { display: block; }
+
+  .subtitle{ color:var(--blue-700); font-size:clamp(0.9rem,3vw,1.15rem); margin-top:.25rem; }
+  .highlight-keyword{ color:var(--orange); font-weight:800; }
+  .highlight-green{ color:var(--green); font-weight:800; }
+  .highlight-red{ color:var(--red); font-weight:800; }
+
+  /* Botones generales */
+  .btn{ color:#fff; border:none; padding:.75rem 1.2rem; border-radius:10px; cursor:pointer; font-weight:800;
+        transition:transform .08s ease, box-shadow .2s ease, background-color .25s ease; min-width:140px; height:48px;
+        display:inline-flex; align-items:center; justify-content:center; font-size: 1rem; }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+  .btn:active{ transform:translateY(0); }
+  .btn-primary{ background:var(--orange); }
+  .btn-primary:hover{ background:var(--orange-700); }
+  
+  /* CORRECCIÓN SOLICITADA: Hover específico para el botón azul */
+  .btn-blue { background:var(--blue-600); }
+  .btn-blue:hover { background:#1a3a5f; } 
+
+  .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+
+  .screen{ display:none; animation:fadeIn .35s ease; flex:1; flex-direction:column; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Pantalla de Inicio */
+  .start-content{ display:flex; flex-direction:column; justify-content:center; align-items:center; flex:1; gap:1rem; padding:1rem; }
+  .advice-box{ background:var(--panel); border-left:4px solid var(--blue-700); padding:1rem 1.2rem; border-radius:12px;
+               color:var(--blue-700); max-width:680px; text-align:center; font-size:clamp(0.9rem,2.5vw,1.1rem); line-height:1.5;}
+  .start-image{ max-width: 300px; width: 100%; margin: 2rem auto 0; display: block; }
+  .advice-box strong { display: block; margin-top: 0.8rem; text-align: center; font-size: 1.1em; font-weight: 900;}
+
+  /* Pantalla de Juego */
+  .game-info{ 
+    display:grid; 
+    grid-template-columns: auto 1fr auto; 
+    gap:.6rem; 
+    align-items:center; 
+    margin-bottom:0.5rem; 
+    width: 100%;
+  }
+  .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
+  .progress-bar{ height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; width: 100%; display: flex; align-items: center; position: relative;}
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
+  .score-label{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
+  
+  /* CORRECCIÓN CRÍTICA MÓVILES: Permitir flujo natural sin altura forzada */
+  .stage-content { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: flex-start; 
+    padding: 0 1rem; 
+    width: 100%; 
+    overflow-y: auto; 
+  }
+  
+  /* NUEVO: Estilo del Título del Vertebrado fuera de la barra */
+  .game-subtitle { 
+    font-size: clamp(1.5rem, 4vw, 2rem); /* Tamaño de título grande */
+    color: var(--blue-dark); 
+    font-weight: 900; 
+    margin-top: 1.5rem; /* Margen superior generoso para que respire */
+    margin-bottom: 0.5rem; /* Separación con la barra */
+    text-align: center; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    width: 100%;
+  }
+
+  /* Contenedor de imagen y botones */
+  .interaction-wrapper {
+    position: relative;
+    max-width: 501px;
+    width: 100%;
+    margin: 0 auto;
+    font-size: 0; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .main-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  /* Contenedor de botones ENVUELTOS (debajo de la imagen) */
+  .choices-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0 1rem;
+    z-index: 10;
+  }
+
+  /* Colores específicos para los botones de elección */
+  #btnViviparo { background: var(--green); }
+  #btnViviparo:hover { background: var(--green-dark); }
+  
+  #btnOviparo { background: var(--red); }
+  #btnOviparo:hover { background: var(--red-dark); }
+
+  /* Animación de "Sacudida" (Shake) */
+  @keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+  }
+
+  .shake-anim {
+    animation: shake 0.5s;
+  }
+
+  /* Botones de acción en juego (no usados para check, pero definidos por estética previa si fuera necesario) */
+  .game-actions {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 50px; 
+  }
+
+  /* Botón de Mute */
+  .mute-btn{ position:absolute; top:.8rem; right:4.5rem; background:var(--orange); color:#fff; border:2px solid #fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; z-index:20; }
+  .mute-btn:hover{ background:var(--orange-700); }
+  .help-btn{ position:absolute; top:.8rem; right:.8rem; width:38px; height:38px; border-radius:50%; border:none; background:#9c27b0; color:#fff; font-weight:800; cursor:pointer; z-index:20; }
+
+  /* Pantalla Final */
+  .results{ display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; flex:1; justify-content:center; }
+  .final-title{ color:var(--blue-dark); font-weight:900; }
+  .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; margin-top: -0.2rem; }
+  .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
+  .final-time{ color:var(--blue-700); }
+  .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; display:none;}
+  @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+  .credit{ color:var(--blue-700); margin-top:1rem; }
+  #finalMsg { font-size: clamp(1.6rem, 3.8vw, 2.4rem); font-weight: 800; color: var(--blue-700); margin-top: 0.6rem; }
+  .school-logo { display: block; width: 160px; max-width: 40%; height: auto; margin-top: 0.8rem; border-radius: 8px; object-fit: contain; }
+  .school-logo:not([src]){ display:none; }
+
+  /* Loading & Confetti */
+  .confetti{ position:fixed; width:10px; height:10px; border-radius:50%; animation: confetti-fall 3s linear forwards; z-index:999; }
+  @keyframes confetti-fall{ 0%{ transform:translate(0, -20px) rotate(0); opacity:1;} 100%{ transform:translate(var(--tx), var(--ty)) rotate(360deg); opacity:0; } }
+  .loading-indicator {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); display: none; justify-content: center;
+    align-items: center; z-index: 1000; flex-direction: column;
+  }
+  .loading-spinner {
+    width: 50px; height: 50px; border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--orange); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 20px;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .loading-text { color: white; font-size: 1.2rem; text-align: center; }
+
+  /* Responsive adjustments */
+  @media (max-width: 500px) {
+    .btn { min-width: 140px; padding: .75rem 1.2rem; font-size: 1rem; } 
+    .advice-box { padding: 0.8rem; }
+    .interaction-wrapper { max-width: 100%; }
+    .game-subtitle { font-size: 1.5rem; margin-top: 1rem; } /* Ajuste móvil */
+    .choices-wrapper { gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
+
+  <section class="screen active" id="startScreen" aria-labelledby="title-start">
+    <header>
+      <h1 id="title-start">¿Cómo nacen los vertebrados?</h1>
+      <br>
+      <div class="subtitle">Demuestra tus conocimientos indicando cómo se reproducen los animales invertebrados</div>
+    </header>
+    <div class="start-content">
+      <div class="advice-box" role="note" aria-live="polite">
+        <span class="advice-text">
+            Los animales vertebrados nacen de dos maneras: los mamíferos son <span class="highlight-keyword">vivíparos</span>, es decir, nacen vivos del vientre de su mamá; mientras que los animales <span class="highlight-keyword">ovíparos</span> nacen de un huevo.
+        </span>
+        <strong>¡Buena suerte!</strong>
+      </div>
+      <button class="btn btn-primary" id="playBtn">Comenzar</button>
+      <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Niños aprendiendo">
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen">
+    <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
+    
+    <div class="stage-content">
+        <!-- TÍTULO DEL JUEGO -->
+        <div class="game-subtitle" id="animalTypeLabel">¿Cómo nacen los vertebrados?</div>
+        
+        <div class="game-info">
+          <div class="timer" id="timer">00:00</div>
+          <div class="progress-bar" aria-label="Progreso">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="score-label">Puntos: <span id="currentScore">0</span></div>
+        </div>
+
+        <div class="interaction-wrapper" id="interactionWrapper">
+            <img class="main-image" id="animalImage" src="" alt="Animal vertebrado">
+            <!-- Botones envueltos (debajo de la imagen) -->
+            <div class="choices-wrapper">
+                <button class="btn" id="btnViviparo">Vivíparo 🤰</button>
+                <button class="btn" id="btnOviparo">Ovíparo 🥚</button>
+            </div>
+        </div>
+
+        <!-- Contenedor vacío para mantener estructura si fuera necesario, aunque los botones están en la imagen -->
+        <div class="game-actions"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="resultsScreen">
+    <header>
+      <h1 class="final-title">Cómo nacen los animales vertebrados</h1>
+    </header>
+    <div class="results">
+      <div id="trophyBox">
+        <div class="trophy">🏆</div>
+      </div>
+      <div class="score-title">Puntuación:</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="final-time">Tiempo: <span id="finalTime">00:00</span></div>
+      <div id="finalMsg" class="subtitle"></div>
+      <button class="btn btn-primary" id="backToMenuBtn">Volver al menú</button>
+      <span class="credit">Creado por Manuel J. Ventura</span>
+      <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Siurot.png" alt="Logo del colegio" />
+    </div>
+  </section>
+</div>
+
+<div id="helpModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; justify-content:center; align-items:center; padding:1rem;">
+  <div style="background:#fff; border-radius:12px; max-width:680px; width:100%; padding:1.2rem 1.2rem; box-shadow:0 10px 24px rgba(0,0,0,.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:.5rem; margin-bottom:.8rem;">
+      <h3 style="color:var(--blue-700);">Ayuda</h3>
+      <button class="btn-ghost" id="closeHelp" style="border-radius:8px; padding:.4rem .7rem; height:auto; min-width:auto;">Cerrar</button>
+    </div>
+    <div style="line-height:1.55; color:#333;">
+      <p><strong>Pulsa el botón</strong> correspondiente para indicar si es un animal vivíparo 🤰 u ovivíparo 🥚.</p>
+      <p style="margin-top:0.5rem;">
+         <span class="highlight-green" style="color:var(--green);">Vivíparo:</span> Nacen del vientre materno (Mamíferos).<br>
+         <span class="highlight-red" style="color:var(--red);">Ovíparo:</span> Nacen de un huevo (Aves, Reptiles, Anfibios, Peces).
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="loading-indicator" id="loadingIndicator">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando audios y efectos...</div>
+</div>
+
+<script>
+/************** Data **************/
+const ANIMALS_DATA = [
+  // Vivíparos (Mamíferos)
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Murcielago.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/vaca.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Delfin.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/oveja.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/elefante.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/gorila.png' },
+  { type: 'Vivíparo', label: 'Vivíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/pantera.png' },
+  // Ovíparos
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Camaleon.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Pinguino.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Serpiente.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Tortuga.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/tiburon.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Rana.png' },
+  { type: 'Ovíparo', label: 'Ovíparo', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Avestruz.png' }
+];
+
+const TOTAL_QUESTIONS = ANIMALS_DATA.length;
+// Puntuación por pregunta = 100 / 14
+const POINTS_PER_QUESTION = 100 / TOTAL_QUESTIONS; 
+const DELAY_CORRECT = 500;
+
+// Enlaces de audio
+const GITHUB_EFFECTS_BASE = 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/';
+const soundFiles = {
+  completed: GITHUB_EFFECTS_BASE + 'Completado.mp3',
+  correct:   GITHUB_EFFECTS_BASE + 'Correcto.mp3',
+  victory:   GITHUB_EFFECTS_BASE + 'Termin%C3%A9.mp3', 
+  error:     GITHUB_EFFECTS_BASE + 'Error.mp3',
+  tap:       GITHUB_EFFECTS_BASE + 'Tap.mp3',
+};
+
+/************** State & Variables **************/
+let animalsShuffled = [];
+let currentQuestionIndex = 0;
+let currentScore = 0;
+let isGameActive = false;
+let timerInt = null; 
+let elapsed = 0;
+let isMuted = false;
+let audioUnlocked = false; 
+
+const sounds = {};
+const el = (id) => document.getElementById(id);
+
+const progressFill = el('progressFill');
+const timerEl = el('timer');
+const currentScoreEl = el('currentScore');
+const animalImage = el('animalImage');
+const interactionWrapper = el('interactionWrapper');
+const btnViviparo = el('btnViviparo');
+const btnOviparo = el('btnOviparo');
+
+/************** Sound Functions **************/
+
+function preloadSounds() {
+  return new Promise((resolve) => {
+    let loadedCount = 0;
+    const generalFiles = Object.entries(soundFiles);
+    const totalToLoad = generalFiles.length;
+
+    if (totalToLoad === 0) {
+      resolve();
+      return;
+    }
+
+    generalFiles.forEach(([k, url])=>{
+      try {
+        const a = new Audio();
+        a.src = url;
+        a.preload = 'auto';
+        a.crossOrigin = 'anonymous'; 
+        
+        const checkCompletion = () => {
+           if (a.dataset.loaded) return; 
+           a.dataset.loaded = true;
+           loadedCount++;
+           if (loadedCount === totalToLoad) {
+             resolve();
+           }
+        };
+
+        a.addEventListener('canplaythrough', checkCompletion, { once: true });
+        a.addEventListener('loadedmetadata', checkCompletion, { once: true });
+        a.addEventListener('error', checkCompletion, { once: true });
+        a.load();
+        sounds[k] = a;
+
+        setTimeout(() => {
+          if (!a.dataset.loaded) checkCompletion();
+        }, 3000);
+
+      } catch(e) {
+        loadedCount++;
+        if (loadedCount === totalToLoad) resolve();
+      }
+    });
+  });
+}
+
+function unlockAudio(){
+  if (audioUnlocked) return;
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    g.gain.value = 0.0001;
+    o.start();
+    o.stop(ctx.currentTime + 0.02);
+    audioUnlocked = true;
+  } catch(e){
+    audioUnlocked = true; 
+  }
+}
+
+function play(name){
+  if(isMuted) return;
+  const a = sounds[name];
+  if(!a) return;
+  try{
+    const clone = a.cloneNode(); 
+    clone.currentTime = 0;
+    const p = clone.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch(e){}
+}
+
+function reproducirSonidoCorrecto(){ play('correct'); }
+function reproducirSonidoError(){ play('error'); }
+function reproducirSonidoCompletado(){ play('completed'); }
+function reproducirSonidoVictoria(){ play('victory'); }
+function reproducirSonidoTap(){ play('tap'); }
+
+let userInteracted = false;
+function trackUserInteraction(isTap = false) {
+  if (!userInteracted) {
+    userInteracted = true;
+    unlockAudio();
+    if(sounds.tap) {
+        try {
+            sounds.tap.volume = 0;
+            const playPromise = sounds.tap.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    sounds.tap.pause();
+                    sounds.tap.volume = 1;
+                    sounds.tap.currentTime = 0;
+                }).catch(() => {
+                    sounds.tap.volume = 1;
+                });
+            }
+        } catch(e) {}
+    }
+  }
+  if (isTap) reproducirSonidoTap();
+}
+
+/************** Game Logic Helpers **************/
+function fmtTime(s){ const m=Math.floor(s/60).toString().padStart(2,'0'); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`; }
+function startTimer(){ clearInterval(timerInt); timerInt = setInterval(()=>{ elapsed++; timerEl.textContent = fmtTime(elapsed); },1000); }
+function pauseTimer(){ clearInterval(timerInt); }
+function stopTimer(){ clearInterval(timerInt); }
+
+function shuffle(a){ const arr=[...a]; for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+function updateProgress(){ 
+  const progress = (currentQuestionIndex / TOTAL_QUESTIONS) * 100;
+  progressFill.style.width = progress + '%'; 
+  currentScoreEl.textContent = Math.round(currentScore);
+}
+
+/************** Game Flow **************/
+
+function loadQuestion(){
+  if (currentQuestionIndex >= TOTAL_QUESTIONS) {
+    finishGame();
+    return;
+  }
+  
+  isGameActive = true;
+  
+  interactionWrapper.classList.remove('shake-anim');
+  
+  // Resetear botones
+  btnViviparo.disabled = false;
+  btnOviparo.disabled = false;
+  btnViviparo.style.opacity = '1';
+  btnOviparo.style.opacity = '1';
+  btnViviparo.style.boxShadow = '';
+  btnOviparo.style.boxShadow = '';
+  btnViviparo.style.transform = '';
+  btnOviparo.style.transform = '';
+
+  const animal = animalsShuffled[currentQuestionIndex];
+  
+  animalImage.style.opacity = '0';
+  animalImage.src = animal.url;
+  animalImage.alt = `Imagen de animal ${animal.type}`;
+  
+  // El título es estático en este juego según el prompt, no cambia por animal
+  // animalTypeLabel.textContent = animal.label; 
+  
+  animalImage.onload = () => {
+    animalImage.style.opacity = '1';
+  };
+  if (animalImage.complete) {
+    animalImage.style.opacity = '1';
+  }
+  
+  updateProgress();
+}
+
+function onAnswerClick(selectedType) {
+  if (!isGameActive) return;
+  
+  trackUserInteraction(true);
+  isGameActive = false; 
+
+  const currentAnimal = animalsShuffled[currentQuestionIndex];
+  const isCorrect = (selectedType === currentAnimal.type);
+
+  // Deshabilitar botones para evitar doble click
+  btnViviparo.disabled = true;
+  btnOviparo.disabled = true;
+
+  if (isCorrect) {
+    reproducirSonidoCorrecto();
+    currentScore += POINTS_PER_QUESTION;
+    updateProgress();
+    // Resaltar visualmente el botón pulsado (correcto)
+    const activeBtn = selectedType === 'Vivíparo' ? btnViviparo : btnOviparo;
+    activeBtn.style.transform = 'scale(1.1)';
+    activeBtn.style.boxShadow = '0 0 20px var(--green)';
+    
+    setTimeout(() => {
+        // Reset visual
+        activeBtn.style.transform = '';
+        activeBtn.style.boxShadow = '';
+        currentQuestionIndex++;
+        loadQuestion();
+    }, DELAY_CORRECT);
+    
+  } else {
+    reproducirSonidoError();
+    interactionWrapper.classList.add('shake-anim');
+    
+    // Mostrar cual era el correcto
+    if (currentAnimal.type === 'Vivíparo') {
+        btnViviparo.style.boxShadow = '0 0 20px var(--green)';
+        btnOviparo.style.boxShadow = '0 0 20px var(--red)';
+    } else {
+        btnOviparo.style.boxShadow = '0 0 20px var(--green)';
+        btnViviparo.style.boxShadow = '0 0 20px var(--red)';
+    }
+    
+    pauseTimer(); 
+    setTimeout(() => {
+        // Reset visual
+        btnViviparo.style.boxShadow = '';
+        btnOviparo.style.boxShadow = '';
+        
+        currentQuestionIndex++;
+        startTimer(); // Reanudar antes de cargar la siguiente
+        loadQuestion();
+    }, 1500); // Un poco más de tiempo para ver el error en rojo
+  }
+}
+
+function startGame(){
+  el('startScreen').classList.remove('active');
+  el('gameScreen').classList.add('active');
+  
+  animalsShuffled = shuffle(ANIMALS_DATA);
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  elapsed = 0;
+  
+  timerEl.textContent = '00:00';
+  currentScoreEl.textContent = '0';
+  
+  startTimer();
+  loadQuestion();
+}
+
+function finishGame(){ 
+  stopTimer(); 
+  isGameActive = false;
+  
+  el('gameScreen').classList.remove('active'); 
+  el('resultsScreen').classList.add('active');
+  
+  el('finalScore').textContent = Math.round(currentScore); 
+  el('finalTime').textContent = fmtTime(elapsed);
+  
+  const isPerfect = Math.round(currentScore) === 100; 
+  el('trophyBox').style.display = isPerfect ? 'block' : 'none';
+  document.querySelector('.trophy').style.display = isPerfect ? 'block' : 'none';
+  
+  const msg = isPerfect ? '¡Enhorabuena, puntuación máxima!' : '¡Buen trabajo! Sigue practicando';
+  el('finalMsg').textContent = msg;
+  
+  if(isPerfect){ 
+    reproducirSonidoVictoria(); 
+    spawnConfetti(); 
+  } else { 
+    reproducirSonidoCompletado(); 
+  }
+  updateProgress(); 
+}
+
+function gotoStart(){
+  el('resultsScreen').classList.remove('active'); 
+  el('gameScreen').classList.remove('active'); 
+  el('startScreen').classList.add('active');
+  
+  animalsShuffled = [];
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  elapsed = 0;
+  timerEl.textContent = '00:00';
+  progressFill.style.width = '0%';
+  currentScoreEl.textContent = '0';
+  isGameActive = false;
+}
+
+/************** Efectos Visuales **************/
+
+function spawnConfetti(){
+  for(let i=0;i<120;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');
+      c.className='confetti';
+      const x=Math.random()*window.innerWidth;
+      const ty=window.innerHeight+20;
+      const tx=(Math.random()-.5)*160;
+      const colors=['#ff595e','#1982c4','#6a4c93','#ffca3a','#8ac926','#ff924c','#00c2ff'];
+      c.style.left=x+'px';
+      c.style.top='-10px';
+      c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
+      const size=6+Math.random()*8;
+      c.style.width=size+'px';
+      c.style.height=size+'px';
+      c.style.setProperty('--tx', tx+'px');
+      c.style.setProperty('--ty', ty+'px');
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 3200);
+    }, i*18);
+  }
+}
+
+/************** Event Listeners **************/
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const loadingIndicator = el('loadingIndicator');
+    loadingIndicator.style.display = 'flex';
+    loadingIndicator.querySelector('.loading-text').textContent = "Cargando audios y efectos...";
+
+    await preloadSounds(); 
+
+    loadingIndicator.style.display = 'none';
+
+    document.addEventListener('click', () => trackUserInteraction(false), { once: false });
+    document.addEventListener('touchstart', () => trackUserInteraction(false), { once: false });
+    document.addEventListener('keydown', () => trackUserInteraction(false), { once: false });
+
+    el('playBtn').addEventListener('click', (e)=>{
+      trackUserInteraction(true);
+      startGame();
+    });
+
+    el('backToMenuBtn').addEventListener('click', ()=>{
+      trackUserInteraction(true);
+      gotoStart();
+    });
+
+    btnViviparo.addEventListener('click', () => onAnswerClick('Vivíparo'));
+    btnOviparo.addEventListener('click', () => onAnswerClick('Ovíparo'));
+    
+    el('muteBtn').addEventListener('click', ()=>{
+      trackUserInteraction(false);
+      isMuted = !isMuted;
+      el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    el('helpBtn').addEventListener('click', ()=>{ 
+      trackUserInteraction(true);
+      el('helpModal').style.display='flex'; 
+    });
+    el('closeHelp').addEventListener('click', ()=>{ 
+      trackUserInteraction(true);
+      el('helpModal').style.display='none'; 
+    });
+    el('helpModal').addEventListener('click', (e)=>{ 
+      if(e.target===el('helpModal')) el('helpModal').style.display='none'; 
+    });
+
+    ANIMALS_DATA.forEach(animal => {
+        const img = new Image();
+        img.src = animal.url;
+    });
+});
+</script>
+</body>
+</html>
